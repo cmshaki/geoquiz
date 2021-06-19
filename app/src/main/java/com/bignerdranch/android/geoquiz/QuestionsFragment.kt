@@ -16,7 +16,6 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 private const val TAG = "Questions Fragment"
-private const val REQUEST_CODE_CHEAT = 0
 
 class QuestionsFragment: Fragment() {
     interface Callbacks {
@@ -32,9 +31,7 @@ class QuestionsFragment: Fragment() {
     private lateinit var prevButton: ImageButton
     private lateinit var questionTextView: TextView
 
-    private val quizViewModel: QuizViewModel by lazy {
-        ViewModelProvider(this).get(QuizViewModel::class.java)
-    }
+    private lateinit var quizViewModel: QuizViewModel
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -51,6 +48,7 @@ class QuestionsFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        quizViewModel = activity.let { ViewModelProvider(requireActivity()).get(QuizViewModel::class.java) }
         val view = inflater.inflate(R.layout.fragment_questions, container, false)
         trueButton = view.findViewById(R.id.true_button)
         falseButton = view.findViewById(R.id.false_button)
@@ -86,7 +84,7 @@ class QuestionsFragment: Fragment() {
             updateQuestion()
         }
         cheatButton.apply{
-            isEnabled = !quizViewModel.isCheater
+            isEnabled = !quizViewModel.isCheater && quizViewModel.cheatCount < 3
             setOnClickListener { _ ->
                 val answerIsTrue = quizViewModel.currentQuestionAnswer
                 callbacks?.onCheatButtonClicked(answerIsTrue)
@@ -96,21 +94,17 @@ class QuestionsFragment: Fragment() {
         return view
     }
 
-
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart() called")
-    }
-
     private fun updateQuestion() {
         val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
         if(quizViewModel.answersSize < quizViewModel.getCurrentIndex + 1) {
             trueButton.isEnabled = true
             falseButton.isEnabled = true
+            cheatButton.isEnabled = true
         } else {
             trueButton.isEnabled = false
             falseButton.isEnabled = false
+            cheatButton.isEnabled = false
         }
     }
 
@@ -123,12 +117,12 @@ class QuestionsFragment: Fragment() {
             else -> R.string.incorrect_toast
         }
 
-        Toast.makeText(this@QuestionsFragment.requireContext(), messageResId, Toast.LENGTH_SHORT)
+        Toast.makeText(requireContext(), messageResId, Toast.LENGTH_SHORT)
             .show()
     }
 
     private fun showPercentage() {
-        Toast.makeText(this@QuestionsFragment.requireContext(), "You have got ${BigDecimal(quizViewModel.results).setScale(2, RoundingMode.HALF_EVEN)}%", Toast.LENGTH_LONG)
+        Toast.makeText(requireContext(), "You have got ${BigDecimal(quizViewModel.results).setScale(2, RoundingMode.HALF_EVEN)}%", Toast.LENGTH_LONG)
             .show()
     }
 
@@ -143,7 +137,13 @@ class QuestionsFragment: Fragment() {
                 if (!type) trueButton.isEnabled = false else falseButton.isEnabled = false
                 if (quizViewModel.getCurrentIndex < quizViewModel.questionBankSize - 1) nextButton.isEnabled = true
                 if (quizViewModel.getCurrentIndex > 0) prevButton.isEnabled = true
-                if (quizViewModel.answersSize < quizViewModel.questionBankSize) checkAnswer(type) else showPercentage()
+                if (quizViewModel.answersSize < quizViewModel.questionBankSize) {
+                    checkAnswer(type)
+                } else {
+                    checkAnswer(type)
+                    showPercentage()
+                }
+                cheatButton.isEnabled = false
             }
         }
     }

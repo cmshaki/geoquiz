@@ -26,9 +26,7 @@ class CheatFragment: Fragment() {
     private lateinit var buildVersion: String
 
     private var answerIsTrue: Boolean = false
-    private val quizViewModel: QuizViewModel by lazy {
-        ViewModelProvider(this).get(QuizViewModel::class.java)
-    }
+    private lateinit var quizViewModel: QuizViewModel
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -45,6 +43,7 @@ class CheatFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        quizViewModel = activity.let { ViewModelProvider(requireActivity()).get(QuizViewModel::class.java) }
         val view = inflater.inflate(R.layout.fragment_cheat, container, false)
         answerTextView = view.findViewById(R.id.answer_text_view)
         showAnswerButton = view.findViewById(R.id.show_answer_button)

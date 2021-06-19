@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 
 private const val KEY_INDEX = "index"
 private const val CHEAT_INDEX = "cheat_index"
+private const val CHEAT_COUNT_INDEX = "cheat_count_index"
 private const val TAG = "MainActivity"
 //private const val ANSWERS = "answers"
 
@@ -53,24 +54,6 @@ class MainActivity : AppCompatActivity(), QuestionsFragment.Callbacks {
         savedInstanceState.putInt(CHEAT_COUNT_INDEX, quizViewModel.cheatCount)
 //        savedInstanceState.putString(ANSWERS, quizViewModel.answers.toString())
     }
-
-//    override fun onActivityResult(requestCode: Int,
-//                                  resultCode: Int,
-//                                  data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//
-//        if (resultCode != Activity.RESULT_OK) {
-//            return
-//        }
-//
-//        if (requestCode == REQUEST_CODE_CHEAT) {
-//            quizViewModel.isCheater =
-//                data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
-//        }
-//        cheatButton.isEnabled = false
-//        quizViewModel.cheatCount = quizViewModel.cheatCount + 1
-//        Log.d(TAG, "This is the current cheat Count ${quizViewModel.cheatCount}")
-//    }
 
     override fun onCheatButtonClicked(cheatAnswer: Boolean) {
         val fragment = CheatFragment.newInstance(cheatAnswer)
