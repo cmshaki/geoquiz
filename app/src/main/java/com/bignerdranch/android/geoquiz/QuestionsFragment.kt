@@ -63,10 +63,16 @@ class QuestionsFragment: Fragment() {
         nextButton.apply{
             isEnabled = false
             setOnClickListener {
-                quizViewModel.moveToNext()
-                if(((quizViewModel.answersSize < quizViewModel.questionBankSize && quizViewModel.getCurrentIndex > quizViewModel.answersSize - 1) || (quizViewModel.answersSize == quizViewModel.questionBankSize && quizViewModel.getCurrentIndex == quizViewModel.questionBankSize - 1) || (quizViewModel.answersSize == quizViewModel.questionBankSize - 1)) && isEnabled) isEnabled = false
+                with(quizViewModel) {
+                    moveToNext()
+                    saveIsCheater(false)
+                }
+                val currentIndex = quizViewModel.getCurrentIndex
+                val questionBankSize = quizViewModel.questionBankSize
+                val answersSize = quizViewModel.getAnswersSize
+                if(((answersSize < questionBankSize && currentIndex > answersSize - 1) || (answersSize == questionBankSize && currentIndex == questionBankSize - 1) || (answersSize == questionBankSize - 1)) && isEnabled) isEnabled = false
                 if(!prevButton.isEnabled) prevButton.isEnabled = true
-                cheatButton.isEnabled = quizViewModel.cheatCount < 3
+                cheatButton.isEnabled = quizViewModel.getCheatCount < 3
                 updateQuestion()
             }
         }
@@ -74,8 +80,10 @@ class QuestionsFragment: Fragment() {
             isEnabled = false
             setOnClickListener {
                 quizViewModel.moveToPrev()
+                val currentIndex = quizViewModel.getCurrentIndex
+                val answersSize = quizViewModel.getAnswersSize
                 if (quizViewModel.getCurrentIndex == 0 && isEnabled) isEnabled = false
-                if(!nextButton.isEnabled && (quizViewModel.answersSize > 0 && quizViewModel.getCurrentIndex < quizViewModel.answersSize)) nextButton.isEnabled = true
+                if(!nextButton.isEnabled && (answersSize > 0 && currentIndex < answersSize)) nextButton.isEnabled = true
                 updateQuestion()
             }
         }
@@ -84,8 +92,8 @@ class QuestionsFragment: Fragment() {
             updateQuestion()
         }
         cheatButton.apply{
-            isEnabled = !quizViewModel.isCheater && quizViewModel.cheatCount < 3
-            setOnClickListener { _ ->
+            isEnabled = !quizViewModel.getIsCheater && quizViewModel.getCheatCount < 3
+            setOnClickListener {
                 val answerIsTrue = quizViewModel.currentQuestionAnswer
                 callbacks?.onCheatButtonClicked(answerIsTrue)
             }
@@ -97,10 +105,9 @@ class QuestionsFragment: Fragment() {
     private fun updateQuestion() {
         val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
-        if(quizViewModel.answersSize < quizViewModel.getCurrentIndex + 1) {
+        if(quizViewModel.getAnswersSize < quizViewModel.getCurrentIndex + 1) {
             trueButton.isEnabled = true
             falseButton.isEnabled = true
-            cheatButton.isEnabled = true
         } else {
             trueButton.isEnabled = false
             falseButton.isEnabled = false
@@ -112,7 +119,7 @@ class QuestionsFragment: Fragment() {
         val correctAnswer = quizViewModel.currentQuestionAnswer
 
         val messageResId = when {
-            quizViewModel.isCheater -> R.string.judgment_toast
+            quizViewModel.getIsCheater -> R.string.judgment_toast
             userAnswer == correctAnswer -> R.string.correct_toast
             else -> R.string.incorrect_toast
         }
@@ -128,16 +135,16 @@ class QuestionsFragment: Fragment() {
 
     private fun buttonFunctions(btn: Button, type: Boolean) {
         with(btn) {
-            isEnabled = quizViewModel.answersSize < quizViewModel.getCurrentIndex + 1
+            isEnabled = quizViewModel.getAnswersSize < quizViewModel.getCurrentIndex + 1
             setOnClickListener {
-                if (quizViewModel.answersSize < quizViewModel.getCurrentIndex + 1) quizViewModel.addAnswer(
+                if (quizViewModel.getAnswersSize < quizViewModel.getCurrentIndex + 1) quizViewModel.saveAnswer(
                     type == quizViewModel.currentQuestionAnswer
                 )
                 isEnabled = false
                 if (!type) trueButton.isEnabled = false else falseButton.isEnabled = false
                 if (quizViewModel.getCurrentIndex < quizViewModel.questionBankSize - 1) nextButton.isEnabled = true
                 if (quizViewModel.getCurrentIndex > 0) prevButton.isEnabled = true
-                if (quizViewModel.answersSize < quizViewModel.questionBankSize) {
+                if (quizViewModel.getAnswersSize < quizViewModel.questionBankSize) {
                     checkAnswer(type)
                 } else {
                     checkAnswer(type)

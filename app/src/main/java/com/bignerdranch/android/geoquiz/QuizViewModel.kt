@@ -2,11 +2,17 @@ package com.bignerdranch.android.geoquiz
 
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 
 private const val TAG = "QuizViewModel"
+private const val ANSWERS_KEY = "answers"
+private const val CURRENT_INDEX_KEY = "current_index"
+private const val IS_CHEATER_KEY = "is_cheater"
+private const val CHEAT_COUNT_KEY = "cheat_count"
 
-class QuizViewModel: ViewModel() {
+class QuizViewModel(state: SavedStateHandle): ViewModel() {
+    private val savedStateHandle = state
     private val questionBank = listOf(
         Question(R.string.question_australia, true),
         Question(R.string.question_oceans, true),
@@ -15,39 +21,52 @@ class QuizViewModel: ViewModel() {
         Question(R.string.question_americas, true),
         Question(R.string.question_asia, true)
     )
-
-    var answers = MutableList<Any>(0){false}
-    var currentIndex = 0
-    var isCheater = false
-    var cheatCount = 0
-
+    fun saveAnswer(ans: Boolean) {
+        val answers = getAnswers
+        answers.add(getCurrentIndex, ans)
+        savedStateHandle.set(ANSWERS_KEY, answers)
+    }
+    private val getAnswers: ArrayList<Any>
+        get() = savedStateHandle.get(ANSWERS_KEY)?: ArrayList<Any>()
+    val getAnswersSize: Int
+        get() {
+            val answers = getAnswers
+            if(answers != null) {
+                return answers.size
+            }
+            return 0
+        }
     val getCurrentIndex: Int
-        get() = currentIndex
-
+        get() = savedStateHandle.get(CURRENT_INDEX_KEY)?: 0
+    fun saveIsCheater(hasCheated: Boolean) {
+        savedStateHandle.set(IS_CHEATER_KEY, hasCheated)
+    }
+    val getIsCheater: Boolean
+        get() = savedStateHandle.get(IS_CHEATER_KEY)?: false
+    fun saveCheatCount(cheatCount: Int) {
+        savedStateHandle.set(CHEAT_COUNT_KEY, cheatCount)
+    }
+    val getCheatCount: Int
+        get() = savedStateHandle.get(CHEAT_COUNT_KEY)?: 0
     val questionBankSize: Int
         get() = questionBank.size
-
-    val answersSize: Int
-        get() = answers.size
-
-    fun addAnswer(ans: Boolean) {
-        answers.add(currentIndex, ans)
-    }
-
     val results: Double
-        get() = (if(answers.contains(true)) answers.count{it === true} else 0).toDouble() / answers.size * 100
-
+        get() {
+            val answers = getAnswers
+            return (if(answers.contains(true)) answers.count{it === true} else 0).toDouble() / answers.size * 100
+        }
     val currentQuestionAnswer: Boolean
-        get() = questionBank[currentIndex].answer
-
+        get() = questionBank[getCurrentIndex].answer
     val currentQuestionText: Int
-        get() = questionBank[currentIndex].textResId
-
+        get() = questionBank[getCurrentIndex].textResId
     fun moveToNext() {
-        currentIndex = if (currentIndex < answers.size && currentIndex < questionBank.size - 1) currentIndex + 1 else currentIndex
+        val curIndex = getCurrentIndex
+        val currentIndex = if (curIndex < getAnswers.size && curIndex < questionBank.size - 1) curIndex + 1 else curIndex
+        savedStateHandle.set(CURRENT_INDEX_KEY, currentIndex)
     }
-
     fun moveToPrev() {
-        currentIndex = if (currentIndex > 0) currentIndex - 1 else currentIndex
+        val curIndex = getCurrentIndex
+        val currentIndex = if (curIndex > 0) curIndex - 1 else curIndex
+        savedStateHandle.set(CURRENT_INDEX_KEY, currentIndex)
     }
 }

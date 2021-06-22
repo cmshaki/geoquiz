@@ -14,10 +14,6 @@ import androidx.lifecycle.ViewModelProvider
 private const val ARG_CHEAT_ANSWER = "cheat_answer"
 
 class CheatFragment: Fragment() {
-    interface Callbacks {
-        fun hasCheated()
-    }
-
     private var callbacks: QuestionsFragment.Callbacks? = null
 
     private lateinit var answerTextView: TextView
@@ -57,8 +53,8 @@ class CheatFragment: Fragment() {
                 else -> R.string.false_button
             }
             answerTextView.setText(answerText)
-            quizViewModel.cheatCount = quizViewModel.cheatCount + 1
-            quizViewModel.isCheater = true
+            quizViewModel.saveCheatCount(quizViewModel.getCheatCount + 1)
+            quizViewModel.saveIsCheater(true)
         }
         return view
     }
